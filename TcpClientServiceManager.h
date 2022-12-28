@@ -23,6 +23,7 @@ class TcpClientServiceManager{
         void StartTcpClientServiceManagerThreadInternal();
         void StopTcpClientServiceManagerThread();
         void ClientFDStartListen(TcpClient *);
+        void Stop();
         void AddClientToDB(TcpClient *tcp_client);
 };
 

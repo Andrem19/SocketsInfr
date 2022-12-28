@@ -9,10 +9,9 @@
 #include "TcpServerController.h"
 #include "TcpClientServiceManager.h"
 #include "TcpClient.h"
-// #include "TcpMsgDemarcar.h"
+#include "TcpMsgDemarcar.h"
 
-#define TCP_CLIENT_RECV_BUFFER_SIZE 1024
-unsigned char client_recv_buffer[TCP_CLIENT_RECV_BUFFER_SIZE];
+unsigned char client_recv_buffer[MAX_CLIENT_BUFFER_SIZE];
 
 TcpClientServiceManager::TcpClientServiceManager(TcpServerController *tcp_ctrlr){
      this->tcp_ctrlr = tcp_ctrlr;
@@ -109,7 +108,7 @@ void TcpClientServiceManager::StartTcpClientServiceManagerThreadInternal() {
                     
                     rcv_bytes = recvfrom(tcp_client->comm_fd,
                                                         client_recv_buffer, 
-                                                        TCP_CLIENT_RECV_BUFFER_SIZE,
+                                                        MAX_CLIENT_BUFFER_SIZE,
                                                         0,
                                                         (struct sockaddr *)&client_addr, &addr_len);
 
@@ -118,17 +117,13 @@ void TcpClientServiceManager::StartTcpClientServiceManagerThreadInternal() {
                         sleep(1);
                     }
 
-                    // if (tcp_client->msgd) {
-                    //     tcp_client->msgd->ProcessMsg (tcp_client, client_recv_buffer, rcv_bytes);
-                    // }
-                    // else if  (this->tcp_ctrlr->client_msg_recvd) {
-                    //     this->tcp_ctrlr->client_msg_recvd(this->tcp_ctrlr, tcp_client,
-                    //                     client_recv_buffer, rcv_bytes);
-                    // }         
-                    if  (this->tcp_ctrlr->client_msg_recvd) {
+                    if (tcp_client->msgd) {
+                        tcp_client->msgd->ProcessMsg (tcp_client, client_recv_buffer, rcv_bytes);
+                    }
+                    else if  (this->tcp_ctrlr->client_msg_recvd) {
                         this->tcp_ctrlr->client_msg_recvd(this->tcp_ctrlr, tcp_client,
                                         client_recv_buffer, rcv_bytes);
-                    }        
+                    }              
                 }
                 // memset (client_recv_buffer, 0, rcv_bytes);
         }
@@ -160,4 +155,27 @@ void TcpClientServiceManager::StopTcpClientServiceManagerThread() {
     pthread_join(*this->client_svc_mgr_thread, NULL);
     free(this->client_svc_mgr_thread);
     this->client_svc_mgr_thread = NULL;
+}
+void
+TcpClientServiceManager::Stop() {
+
+    this->StopTcpClientServiceManagerThread();
+
+    std::list<TcpClient *>::iterator it;
+    TcpClient *tcp_client, *next_tcp_client;
+
+    /* This fn assumes that Svc mgr thread is already cancelled,
+        hence no need to lock anything */
+    assert(this->client_svc_mgr_thread == NULL);
+
+    for (it = this->tcp_client_db.begin(), tcp_client = *it;
+         it != this->tcp_client_db.end();
+         tcp_client = next_tcp_client)
+    {
+        next_tcp_client = *(++it);
+        this->tcp_client_db.remove(tcp_client);
+        /* Note that these clients are still present in ClientDBMgr DB */
+    }
+
+    delete this;
 }

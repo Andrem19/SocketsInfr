@@ -47,3 +47,23 @@ void TcpClientDbManager::CopyAllClientsTolist (std::list<TcpClient *> *list) {
     }
     pthread_rwlock_unlock(&this->rwlock);
 }
+
+void TcpClientDbManager::Purge()
+{
+    std::list<TcpClient *>::iterator it;
+    TcpClient *tcp_client, *next_tcp_client;
+
+    pthread_rwlock_rdlock(&this->rwlock);
+
+    for (it = this->tcp_client_db.begin(), tcp_client = *it;
+         it != this->tcp_client_db.end();
+         tcp_client = next_tcp_client)
+    {
+
+        next_tcp_client = *(++it);
+
+        this->tcp_client_db.remove(tcp_client);
+        tcp_client->Abort();
+    }
+     pthread_rwlock_unlock(&this->rwlock);
+}

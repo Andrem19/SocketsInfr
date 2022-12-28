@@ -21,6 +21,7 @@ class TcpClientDbManager{
     void StartTcpClientDbInit();
     void AddClientToDB(TcpClient *tcp_client);
     void DisplayClientDb();
+    void Purge();
     void CopyAllClientsTolist (std::list<TcpClient *> *list);
 };
 

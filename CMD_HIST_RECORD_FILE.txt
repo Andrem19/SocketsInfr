@@ -1,0 +1,10 @@
+config console name Tcp-project
+config tcp-server blah
+config tcp-server blah start
+config tcp-server blah stop
+config tcp-server s1
+config tcp-server s1 start
+config tcp-server s2 127.0.0.1 41000
+config tcp-server s2 start
+config tcp-server s1 stop
+config tcp-server s2 stop
